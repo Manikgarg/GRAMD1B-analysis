@@ -1,0 +1,468 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+suppressPackageStartupMessages(library("ggplot2"))
+theme_set(ggpubr::theme_pubr(base_size=10, legend='bottom'))
+```
+
+```{r}
+suppressPackageStartupMessages(library("DESeq2"))
+```
+
+#Note that we do not have Clark Scores or MIA scores for AVAST-M lymph node samples and these need to be commented out to avoid errors. 
+```{r}
+#Load the data
+tissue<-c("Skin")
+load(paste("~/Desktop/Melanoma/deseq2Results/tc",tissue,"EventMetNo_VS_tc",tissue,"EventMetYes_CovariateCorrection.deseq2/de.Rdata", sep=""))
+```
+
+```{r}
+#find ENSEMBL ID corresponding to GRAMD1B
+geneName<-"GRAMD1B"
+select<-as.character(res.annot$id[res.annot$Name==geneName])
+#extract expression of this gene
+expressionData <- data.frame(assay(vsd)[select, ])
+#Replace ENSEMBL IDs with corresponding gene names
+names(expressionData) <- geneName
+stand.fun <- function(x){(x-mean(x,na.rm=TRUE))/sd(x,na.rm=TRUE)}
+stdSignature<-stand.fun(expressionData$GRAMD1B)
+names(stdSignature)<-rownames(expressionData) #make sure they retain the name of the samples
+```
+
+```{r}
+#Multiply by beta coefficient?
+#betaCoeff <- read.table("~/Desktop/Melanoma/betaCoeff.tsv", sep = "\t", header = TRUE, quote = "")
+#extract beta coefficient for the gene of interest
+#betaCoeffGene <- betaCoeff[select, "EventMet_Yes_vs_No"]
+#weightedSignature <- expressionData*betaCoeffGene
+#standardization of the weighted signature
+#stand.fun <- function(x){(x-mean(x,na.rm=TRUE))/sd(x,na.rm=TRUE)}
+#stdWeightedSignature <- stand.fun(weightedSignature$GRAMD1B)
+#names(stdWeightedSignature)<-rownames(weightedSignature) #make sure they retain the name of the samples
+```
+
+As expected the absolute values after standardization of weighted signature (stand.fun(weightedSignature\$GRAMD1B)) is same as those of standardized expression values (stand.fun(expressionData\$GRAMD1B)). The only difference comes from sign of the beta coefficient which is negative for GRAMD1B
+
+```{r}
+#Load clinical data
+clinicalData<-data.frame(colData(vsd))
+clinicalData$Signature<- stdSignature[rownames(clinicalData)] #merge signature in clinical data frame
+```
+
+#Check association of GRAMD1B with relapse
+```{r}
+my_comparisons <- list( c("Yes", "No"))
+ggplot(clinicalData[!is.na(clinicalData$EventMet),], aes(x=EventMet, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("Relapse (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
+  #ggpubr::stat_compare_means(label.y = 6, method = "anova", size = 2.5, family="sans")#+
+
+```
+Find suitable cut-off. After talking to Roy, it seems that we could go for a weighted GRAMD1B value of 0?
+Let's check the median value. May be I can take the median cut-off and perform chi-squared test to check if there is no difference between the mean of 2 groups?
+```{r}
+#Divide in high/low groups based on mean and median
+co_mean<-mean(clinicalData$Signature)
+co_median<-median(clinicalData$Signature)
+co_0_33<-quantile(clinicalData$Signature, 0.33)
+co_0_66<-quantile(clinicalData$Signature, 0.66)
+if (tissue=="Skin") {
+  co_density_intersection<--0.223156179#0.235202939
+}else{
+  co_density_intersection<-0.3481057115#-0.223156179#0.235202939
+}
+suppressPackageStartupMessages(library(plotly))
+p<-ggplot(data = clinicalData, aes(x = Signature, fill=EventMet)) +
+  geom_density(alpha=0.3)+
+  geom_vline(xintercept=c(co_mean, co_median, co_0_33, co_0_66, co_density_intersection), linetype=c('twodash', 'longdash', 'dotted', 'dotdash', 'dashed'))+
+  ggtitle(tissue)
+ggplotly(p) 
+```
+
+```{r}
+clinicalData$SignatureGroupMean <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_mean), "High", "Low"))
+clinicalData$SignatureGroupMedian <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_median), "High", "Low"))
+clinicalData$SignatureGroup0_33 <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_0_33), "High", "Low"))
+clinicalData$SignatureGroup0_66 <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_0_66), "High", "Low"))
+clinicalData$SignatureGroupDensityIntersection <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_density_intersection), "High", "Low"))
+
+print(chisq.test(clinicalData$SignatureGroupMean, clinicalData$EventMet))
+print(chisq.test(clinicalData$SignatureGroupMedian, clinicalData$EventMet))
+print(chisq.test(clinicalData$SignatureGroup0_33, clinicalData$EventMet))
+print(chisq.test(clinicalData$SignatureGroup0_66, clinicalData$EventMet))
+print(chisq.test(clinicalData$SignatureGroupDensityIntersection, clinicalData$EventMet))
+```
+#Check association of NRAS with other clinical covariates
+```{r}
+print(chisq.test(clinicalData$NRAS, clinicalData$EventMet))
+print(chisq.test(clinicalData$NRAS, clinicalData$Bres))
+print(chisq.test(clinicalData$NRAS, clinicalData$Ulc))
+```
+#Check association of GRAMD1B with ulceration
+```{r}
+my_comparisons <- list( c("Present", "Absent"))
+ggplot(clinicalData[!is.na(clinicalData$Ulc),], aes(x=Ulc, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("Ulc (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
+  #ggpubr::stat_compare_means(label.y = 6, method = "anova", size = 2.5, family="sans")#+
+```
+
+#Check association of GRAMD1B with Bres
+```{r}
+my_comparisons <- list( c("<= 2.0 mm", ">2-4mm"), c("<= 2.0 mm", ">4.0mm"), c(">2-4mm", ">4.0mm"))
+ggplot(clinicalData[!is.na(clinicalData$Bres),], aes(x=Bres, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("Bres (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")+ # Add pairwise comparisons p-value
+  ggpubr::stat_compare_means(label.y = 6, method = "anova", size = 2.5, family="sans")#+
+```
+
+#Check association of GRAMD1B with Stage
+```{r}
+my_comparisons <- list( c("IIB", "IIC"), c("IIB", "IIIA"), c("IIB", "IIIB"), c("IIB", "IIIC"),
+                        c("IIC", "IIIA"), c("IIC", "IIIB"), c("IIC", "IIIC"),
+                        c("IIIA", "IIIB"), c("IIIA", "IIIC"),
+                        c("IIIB", "IIIC"))
+ggplot(clinicalData[!is.na(clinicalData$Stage),], aes(x=Stage, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("Stage (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")+ # Add pairwise comparisons p-value
+  ggpubr::stat_compare_means(label.y = 9, method = "anova", size = 2.5, family="sans")#+
+```
+```{r}
+ggplot(clinicalData[!is.na(clinicalData$Stage_binary),], aes(x=Stage_binary, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("Stage (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
+  #ggpubr::stat_compare_means(label.y = 9, method = "anova", size = 2.5, family="sans")
+```
+
+#Check association of GRAMD1B with Site
+```{r}
+my_comparisons <- list( c("Head and neck", "Lower lims"), c("Head and neck", "Trunk"), c("Head and neck", "Upper limbs"),
+                        c("Lower lims", "Trunk"), c("Lower lims", "Upper limbs"),
+                        c("Trunk", "Upper limbs"))
+ggplot(clinicalData[!is.na(clinicalData$Site),], aes(x=Site, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("Site (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")+ # Add pairwise comparisons p-value
+  ggpubr::stat_compare_means(label.y = 9, method = "anova", size = 2.5, family="sans")#+
+
+```
+
+#Check association of GRAMD1B with BRAF mutation
+```{r}
+my_comparisons <- list( c("V600E", "WT"))
+ggplot(clinicalData[!is.na(clinicalData$BRAF),], aes(x=BRAF, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("BRAF (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
+  #ggpubr::stat_compare_means(label.y = 9, method = "anova", size = 2.5, family="sans")#+
+```
+
+#Check association of GRAMD1B with NRAS mutation
+```{r}
+my_comparisons <- list( c("Mutant", "WT"))
+ggplot(clinicalData[!is.na(clinicalData$NRAS),], aes(x=NRAS, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("NRAS (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
+  #ggpubr::stat_compare_means(label.y = 9, method = "anova", size = 2.5, family="sans")#+
+```
+
+#Check association of GRAMD1B with TIL counts
+```{r}
+jt_ns_sm_scores = read.table("../JT_NS_SM_Combined.xls - JT_NS_SM.tsv", sep = "\t", header = TRUE, quote = "")
+combinedScore <- data.frame("Scanned_file.me"= jt_ns_sm_scores$JT_Scanned_file.me, 
+                                "R.Seq_sampleID"= jt_ns_sm_scores$JT_R.Seq_sampleID, 
+                                "ClarkScore"= ifelse(jt_ns_sm_scores$JT_Clark_score==jt_ns_sm_scores$NS_Clark_score,
+                            jt_ns_sm_scores$JT_Clark_score, 
+                            jt_ns_sm_scores$SM_Clark_score),
+                           "MIAScore"= ifelse(jt_ns_sm_scores$JT_TIL_grade==jt_ns_sm_scores$NS_TIL.GRADE,
+                            jt_ns_sm_scores$JT_TIL_grade, 
+                            jt_ns_sm_scores$SM_TIL_grade))
+#Remove duplicated entries
+combinedScore<-combinedScore[!duplicated(combinedScore$R.Seq_sampleID), ]
+rownames(combinedScore)<-combinedScore$R.Seq_sampleID #rename rownames with sample ids
+```
+
+```{r}
+rownames(clinicalData)<-clinicalData$RNA.Seq.Sample
+df<-data.frame("EventMet"=clinicalData$EventMet,
+               "ClarkScore"=combinedScore[rownames(clinicalData), "ClarkScore"],
+               "MIAScore"=combinedScore[rownames(clinicalData), "MIAScore"],
+               "Signature"=clinicalData$Signature)
+rownames(df)<-rownames(clinicalData)
+
+df$ClarkScore <- as.factor(df$ClarkScore)
+levels(df$ClarkScore) <- c("absent", "nonbrisk", "brisk")
+```
+
+```{r}
+my_comparisons <- list( c("absent", "nonbrisk"), c("nonbrisk", "brisk"), c("absent", "brisk") )
+#df$JT_Clark_score <- factor(df$JT_Clark_score, levels = c("absent", "nonbrisk", "brisk"))
+ggplot(df[!is.na(df$ClarkScore), ], aes(x=ClarkScore, y=Signature#, color=DRBrain
+                                        ))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("Clark score (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(df$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")+ # Add pairwise comparisons p-value
+  ggpubr::stat_compare_means(label.y = 6, method = "anova", size = 2.5, family="sans")#+
+ # facet_wrap(~DRBrain)# Add global p-value
+```
+
+```{r}
+my_comparisons <- list( c("0", "1"), c("0", "2"), c("0", "3"), c("1", "2"), c("1", "3"), c("2", "3"))
+df$MIAScore <- as.factor(df$MIAScore)
+ggplot(df[!is.na(df$MIAScore), ], aes(x=MIAScore, y=Signature#, color=DRBrain
+                                      ))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5)+
+  scale_fill_brewer(type="qual", palette = "Dark2", name = "MIA score")+
+  xlab("MIA score (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(df$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")+ # Add pairwise comparisons p-value
+  ggpubr::stat_compare_means(label.y = 6, method = "anova", size = 2.5, family="sans")#+
+  #facet_wrap(~DRBrain)
+     # Add global p-value
+
+```
+```{r}
+#my_comparisons <- list( c("Mutant", "WT"))
+ggplot(clinicalData[!is.na(clinicalData$treatment),], aes(x=treatment, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("Treatment (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
+  #ggpubr::stat_compare_means(label.y = 9, method = "anova", size = 2.5, family="sans")#+
+```
+```{r}
+#my_comparisons <- list( c("Mutant", "WT"))
+ggplot(clinicalData[!is.na(clinicalData$ECOG),], aes(x=ECOG, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  xlab("ECOG (AVAST-M Skin)")+
+  ylab("Weighted GRAMD1B score (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
+  #ggpubr::stat_compare_means(label.y = 9, method = "anova", size = 2.5, family="sans")#+
+```
+
+#Perform differential expression analysis
+```{r}
+combinedScore$ClarkScore <- as.factor(combinedScore$ClarkScore)
+levels(combinedScore$ClarkScore) <- c("absent", "nonbrisk", "brisk")
+clinicalData$ClarkScore<-combinedScore[rownames(clinicalData), "ClarkScore"]
+#merge(clinicalData, combinedScore, by.x="RNA.Seq.Sample", by.y="R.Seq_sampleID")
+#rownames(clinicalData)<-clinicalData$RNA.Seq.Sample
+#clinicalData$ClarkScore=combinedScore$ClarkScore[rownames(clinicalData)]
+```
+
+```{r}
+#While accounting for Stage, NRAS mutation, TIL score and EventMet
+#Subset to only those samples which have non-missing entires for these covariates
+clinicalData_sub<-clinicalData[(!is.na(clinicalData$Stage))&(!is.na(clinicalData$NRAS))&(!is.na(clinicalData$ClarkScore))&(!is.na(clinicalData$EventMet)), ]
+data.f_sub<-data.f[, rownames(clinicalData_sub)]
+```
+
+```{r}
+table(clinicalData_sub$SignatureGroupMean)
+```
+
+```{r}
+dds1 <- DESeqDataSetFromMatrix(countData = data.f_sub,
+                               colData   = clinicalData_sub,
+                               design    = ~ Stage+NRAS+ClarkScore+EventMet+SignatureGroupMean)
+```
+
+```{r}
+totalcounts1.gene = rowSums(counts(dds1))
+dds1 <- dds1[totalcounts1.gene>=10,]
+```
+
+```{r}
+# dimensions post filtering
+m = nrow(dds1)
+n = ncol(dds1)
+```
+
+```{r}
+dds1 <- DESeq(dds1)
+res1 <- results(dds1)
+res1
+```
+```{r}
+#Merge with gene names and check if the differentially expressed genes make sense
+res<-data.frame(res1)
+res<-res[order(res$padj), ]
+res$Name<-res.annot[rownames(res), "Name"]
+head(res)
+#GRAMD1B is differentially expressed in GRAMD1B groups and is downregulated in the low expression group compared to the high-expression group so atleast this makes sense.
+```
+#Perform lfc shrinkage for GSEA
+```{r}
+library("apeglm")
+coefName = resultsNames(dds1)
+resWithLfcShrinkage = data.frame(lfcShrink(dds1, coef = tail(coefName, n=1), type="apeglm"))
+#Add suffix to colnames for easy identification later on.
+colnames(resWithLfcShrinkage) = paste(colnames(resWithLfcShrinkage),"lfcShrinkApplied", sep = "_")
+#Add ENSEMBL ID as a column in the data frame to ease merging later
+resWithLfcShrinkage$id = rownames(resWithLfcShrinkage)
+```
+
+```{r}
+#Merge these with DE original DE results
+res$id<-rownames(res)
+deResultsUpdated = merge(x = res, y = data.frame(resWithLfcShrinkage), by = "id")
+deResultsUpdated = deResultsUpdated[order(deResultsUpdated$padj),]
+#Save the results
+write.table(deResultsUpdated[deResultsUpdated$padj_lfcShrinkApplied<0.1, ], file = "../results/de_gsea/deWithLfcSkrinkageApplied_GRAMD1B_all.tsv", col.names = TRUE, row.names = FALSE, quote = FALSE, sep = '\t')
+#Save the differentially expressed genes (padj<0.1)
+write.table(deResultsUpdated[deResultsUpdated$padj_lfcShrinkApplied<0.1, ], file = "../results/de_gsea/deWithLfcSkrinkageApplied_GRAMD1B_padj_0_1.tsv", col.names = TRUE, row.names = FALSE, quote = FALSE, sep = '\t')
+```
+
+```{r}
+head(deResultsUpdated)
+```
+
+#Create a ranked list for GSEA
+```{r}
+#Create ranked list for running Pre-ranked GSEA tool
+rankedList = na.omit(data.frame(deResultsUpdated$Name, deResultsUpdated$log2FoldChange_lfcShrinkApplied))
+rankedList = rankedList[with(rankedList, order(deResultsUpdated.log2FoldChange_lfcShrinkApplied)), ]
+#Save the ranked list to a new file for GSEA.
+write.table(rankedList, file = "../results/de_gsea/rankedList_GRAMD1B.rnk", col.names = FALSE, row.names = FALSE, quote = FALSE, sep = '\t')
+```
+
+#Plot survival curves between the continuous signature and the two groups
+## First add necesssary columns
+```{r}
+suppressPackageStartupMessages(library("survival"))
+# survival outcome 1: "d" for death and "ltrc" for left truncated and right censored
+clinicalData$survival_d_ltrc = Surv(time  = as.numeric(difftime(clinicalData$DOE, clinicalData$DDiag))/365.25,
+                                    time2 = as.numeric(difftime(clinicalData$DOC, clinicalData$DDiag))/365.25,
+                                    event = ifelse(clinicalData$Dead == FALSE, 0, 1))
+
+# survival outcome 2: "rd" for relapse or death, "ltrc" for left truncated and right censored
+clinicalData$survival_rd_ltrc = Surv(time  = as.numeric(difftime(clinicalData$DOE, clinicalData$DDiag))/365.25,
+                                     time2 = as.numeric(difftime(apply(clinicalData[, c("DOC", "DDistMets")],1,min,na.rm=TRUE), clinicalData$DDiag))/365.25,
+                                     event = ifelse((clinicalData$Dead == FALSE & clinicalData$EventMet == "No"), 0, 1))
+
+if(tissue=="Skin"){
+  jt_ns_sm_scores = read.table("../JT_NS_SM_Combined.xls - JT_NS_SM.tsv", sep = "\t", header = TRUE, quote = "")
+  combinedScore <- data.frame("Scanned_file.me"= jt_ns_sm_scores$JT_Scanned_file.me, 
+                              "R.Seq_sampleID"= jt_ns_sm_scores$JT_R.Seq_sampleID, 
+                              "ClarkScore"=ifelse(jt_ns_sm_scores$JT_Clark_score==jt_ns_sm_scores$NS_Clark_score,
+                                                  jt_ns_sm_scores$JT_Clark_score, 
+                                                  jt_ns_sm_scores$SM_Clark_score),
+                           "MIAScore"= ifelse(jt_ns_sm_scores$JT_TIL_grade==jt_ns_sm_scores$NS_TIL.GRADE,
+                                              jt_ns_sm_scores$JT_TIL_grade, 
+                                              jt_ns_sm_scores$SM_TIL_grade))
+  #Remove duplicated entries
+  combinedScore<-combinedScore[!duplicated(combinedScore$R.Seq_sampleID), ]
+  rownames(combinedScore)<-combinedScore$R.Seq_sampleID #rename rownames with sample ids
+  combinedScore$ClarkScore <- as.factor(combinedScore$ClarkScore)
+  levels(combinedScore$ClarkScore) <- c("absent", "nonbrisk", "brisk")
+  clinicalData<-merge(clinicalData, combinedScore, by.x="RNA.Seq.Sample", by.y="R.Seq_sampleID")
+  rownames(clinicalData)<-clinicalData$RNA.Seq.Sample
+}
+```
+
+## then calculate the values
+```{r}
+os<-data.frame()
+pfs<-data.frame()
+temp<-data.frame()
+
+combinations<-c("Signature", "SignatureGroupMean", "SignatureGroupMedian", "SignatureGroup0_33", "SignatureGroup0_66", "SignatureGroupDensityIntersection")
+
+for (combination in combinations) {
+  if (tissue=="Skin") {
+    os_formula<-paste0("survival_d_ltrc~",combination,"+Sex+Age+as.numeric(Nclass)+as.character(Stage)+ECOG+treatment+ClarkScore")
+    pfs_formula<-paste0("survival_rd_ltrc~",combination,"+Sex+Age+as.numeric(Nclass)+as.character(Stage)+ECOG+treatment+ClarkScore")
+  } else{
+    os_formula<-paste0("survival_d_ltrc~",combination,"+Sex+Age+as.numeric(Nclass)+as.character(Stage)+ECOG+treatment")
+    pfs_formula<-paste0("survival_rd_ltrc~",combination,"+Sex+Age+as.numeric(Nclass)+as.character(Stage)+ECOG+treatment")
+  }
+  
+  fit = coef(summary(coxph(as.formula(os_formula), data=clinicalData)))
+  mid  = fit[1,c("exp(coef)")]
+  low  = exp(fit[1,c("coef")]-
+              qnorm(.975)*fit[1,c("se(coef)")])                   
+  high = exp(fit[1,c("coef")]+
+              qnorm(.975)*fit[1,c("se(coef)")])  
+  pval = fit[1,c("Pr(>|z|)")]
+  temp["Signature",c("Signature", "HR","low","high","pval")] = c(rownames(fit)[1],mid,low,high,pval)
+  os<-rbind(os, temp)
+  
+  fit = coef(summary(coxph(as.formula(pfs_formula), data=clinicalData)))
+  mid  = fit[1,c("exp(coef)")]
+  low  = exp(fit[1,c("coef")]-
+              qnorm(.975)*fit[1,c("se(coef)")])                   
+  high = exp(fit[1,c("coef")]+
+              qnorm(.975)*fit[1,c("se(coef)")])  
+  pval = fit[1,c("Pr(>|z|)")]
+  temp["Signature",c("Signature", "HR","low","high","pval")] = c(rownames(fit)[1],mid,low,high,pval)
+  pfs<-rbind(pfs, temp)
+}
+
+write.table(os, paste("../results/survival/AVAST-M_",tissue,"_os.tsv", sep=""), sep="\t", col.names = T, row.names = F)
+write.table(pfs, paste("../results/survival/AVAST-M_",tissue,"_pfs.tsv", sep=""), sep="\t", col.names = T, row.names = F)
+```
