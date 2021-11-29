@@ -59,8 +59,8 @@ ggplot(clinicalData[!is.na(clinicalData$EventMet),], aes(x=EventMet, y=Signature
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
-  xlab("Relapse (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  xlab("Distant metastases (AVAST-M Skin)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
@@ -115,7 +115,7 @@ ggplot(clinicalData[!is.na(clinicalData$Ulc),], aes(x=Ulc, y=Signature))+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
   xlab("Ulc (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
@@ -130,7 +130,7 @@ ggplot(clinicalData[!is.na(clinicalData$Bres),], aes(x=Bres, y=Signature))+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
   xlab("Bres (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")+ # Add pairwise comparisons p-value
@@ -148,7 +148,7 @@ ggplot(clinicalData[!is.na(clinicalData$Stage),], aes(x=Stage, y=Signature))+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
   xlab("Stage (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")+ # Add pairwise comparisons p-value
@@ -160,7 +160,7 @@ ggplot(clinicalData[!is.na(clinicalData$Stage_binary),], aes(x=Stage_binary, y=S
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
   xlab("Stage (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
@@ -177,7 +177,7 @@ ggplot(clinicalData[!is.na(clinicalData$Site),], aes(x=Site, y=Signature))+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
   xlab("Site (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")+ # Add pairwise comparisons p-value
@@ -193,7 +193,7 @@ ggplot(clinicalData[!is.na(clinicalData$BRAF),], aes(x=BRAF, y=Signature))+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
   xlab("BRAF (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
@@ -208,7 +208,7 @@ ggplot(clinicalData[!is.na(clinicalData$NRAS),], aes(x=NRAS, y=Signature))+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
   xlab("NRAS (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
@@ -217,7 +217,7 @@ ggplot(clinicalData[!is.na(clinicalData$NRAS),], aes(x=NRAS, y=Signature))+
 
 #Check association of GRAMD1B with TIL counts
 ```{r}
-jt_ns_sm_scores = read.table("../JT_NS_SM_Combined.xls - JT_NS_SM.tsv", sep = "\t", header = TRUE, quote = "")
+jt_ns_sm_scores = read.table("../../../JT_NS_SM_Combined.xls - JT_NS_SM.tsv", sep = "\t", header = TRUE, quote = "")
 combinedScore <- data.frame("Scanned_file.me"= jt_ns_sm_scores$JT_Scanned_file.me, 
                                 "R.Seq_sampleID"= jt_ns_sm_scores$JT_R.Seq_sampleID, 
                                 "ClarkScore"= ifelse(jt_ns_sm_scores$JT_Clark_score==jt_ns_sm_scores$NS_Clark_score,
@@ -252,7 +252,7 @@ ggplot(df[!is.na(df$ClarkScore), ], aes(x=ClarkScore, y=Signature#, color=DRBrai
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
   xlab("Clark score (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(df$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")+ # Add pairwise comparisons p-value
@@ -269,7 +269,7 @@ ggplot(df[!is.na(df$MIAScore), ], aes(x=MIAScore, y=Signature#, color=DRBrain
   geom_jitter(height = 0, width = 0.1, alpha = 0.5)+
   scale_fill_brewer(type="qual", palette = "Dark2", name = "MIA score")+
   xlab("MIA score (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(df$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")+ # Add pairwise comparisons p-value
@@ -285,7 +285,7 @@ ggplot(clinicalData[!is.na(clinicalData$treatment),], aes(x=treatment, y=Signatu
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
   xlab("Treatment (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
@@ -298,7 +298,7 @@ ggplot(clinicalData[!is.na(clinicalData$ECOG),], aes(x=ECOG, y=Signature))+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
   #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
   xlab("ECOG (AVAST-M Skin)")+
-  ylab("Weighted GRAMD1B score (stand.)")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   ggpubr::stat_compare_means(method = "t.test", size = 2.5, family="sans")#+ # Add pairwise comparisons p-value
