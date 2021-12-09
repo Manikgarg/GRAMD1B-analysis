@@ -373,7 +373,7 @@ res$id<-rownames(res)
 deResultsUpdated = merge(x = res, y = data.frame(resWithLfcShrinkage), by = "id")
 deResultsUpdated = deResultsUpdated[order(deResultsUpdated$padj),]
 #Save the results
-write.table(deResultsUpdated[deResultsUpdated$padj_lfcShrinkApplied<0.1, ], file = "../results/de_gsea/deWithLfcSkrinkageApplied_GRAMD1B_all.tsv", col.names = TRUE, row.names = FALSE, quote = FALSE, sep = '\t')
+write.table(deResultsUpdated, file = "../results/de_gsea/deWithLfcSkrinkageApplied_GRAMD1B_all.tsv", col.names = TRUE, row.names = FALSE, quote = FALSE, sep = '\t')
 #Save the differentially expressed genes (padj<0.1)
 write.table(deResultsUpdated[deResultsUpdated$padj_lfcShrinkApplied<0.1, ], file = "../results/de_gsea/deWithLfcSkrinkageApplied_GRAMD1B_padj_0_1.tsv", col.names = TRUE, row.names = FALSE, quote = FALSE, sep = '\t')
 ```
@@ -385,8 +385,9 @@ head(deResultsUpdated)
 #Create a ranked list for GSEA
 ```{r}
 #Create ranked list for running Pre-ranked GSEA tool
+deResultsUpdated<-read.table("../results/de_gsea/deWithLfcSkrinkageApplied_GRAMD1B_all.tsv", header = T, sep = "\t", quote = "")
 rankedList = na.omit(data.frame(deResultsUpdated$Name, deResultsUpdated$log2FoldChange_lfcShrinkApplied))
-rankedList = rankedList[with(rankedList, order(deResultsUpdated.log2FoldChange_lfcShrinkApplied)), ]
+rankedList = rankedList[with(rankedList, order(deResultsUpdated.log2FoldChange_lfcShrinkApplied, decreasing = T)), ]
 #Save the ranked list to a new file for GSEA.
 write.table(rankedList, file = "../results/de_gsea/rankedList_GRAMD1B.rnk", col.names = FALSE, row.names = FALSE, quote = FALSE, sep = '\t')
 ```
