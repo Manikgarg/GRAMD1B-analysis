@@ -1,0 +1,190 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+suppressPackageStartupMessages(library("ggplot2"))
+theme_set(ggpubr::theme_pubr(base_size=10, legend='bottom'))
+```
+
+```{r}
+suppressPackageStartupMessages(library("DESeq2"))
+```
+
+# TCGA data
+## Load raw expression data
+```{r}
+rawExpressionData = read.table("~/Downloads/TCGA_RNASeqRawCounts.txt", sep = " ", header = TRUE, quote = "")
+```
+
+```{r}
+rawExpressionDataSubset = rawExpressionData[-c(60484:60488), 2:ncol(rawExpressionData)]
+rownames(rawExpressionDataSubset) = gsub("\"", "", rawExpressionData$X..[-c(60484:60488)])
+```
+
+```{r}
+rownames(rawExpressionDataSubset) = gsub("[[:punct:]].*","", rownames(rawExpressionDataSubset))
+```
+
+### Subset to tissue
+```{r}
+#tissue<-c("Regional Cutaneous or Subcutaneous Tissue (includes satellite and in-transit metastasis)", "Primary Tumor")
+tissue<-"Regional Lymph Node"
+rawExpressionDataSubsetTissue = rawExpressionDataSubset[, colnames(rawExpressionDataSubset) %in% rownames(clinicalDataSampleId)[clinicalDataSampleId$tumor_tissue_site %in% tissue]]
+```
+
+## Load the clinical data
+```{r}
+clinicalDataSampleId = read.table("~/Downloads/Clinical_details.xlsx - Sheet2.tsv", sep = "\t", header = TRUE, quote = "")
+```
+
+```{r}
+#Make sure that the clinical data is in the same order as expression data
+rownames(clinicalDataSampleId) = paste("X.", make.names(clinicalDataSampleId$sampleID), ".", sep = "")
+```
+
+### Subset for tissue
+```{r}
+clinicalData = clinicalDataSampleId[rownames(clinicalDataSampleId)%in%colnames(rawExpressionDataSubsetTissue), ]
+#Make sure that the clinical data is in the same order as the sample expression data
+seIdx = match(colnames(rawExpressionDataSubsetTissue), rownames(clinicalData))
+clinicalData = clinicalData[seIdx, ]
+```
+
+## Perform Variance stablization transformation
+### Prepare DESeq2 object
+```{r}
+#Could run it with full list of genes to make it comparable to the transformation applied on AVAST-M dataset
+library("DESeq2")
+dds <- DESeqDataSetFromMatrix(countData = rawExpressionDataSubsetTissue,
+                              colData = clinicalData,
+                              design = ~ 1)
+dds
+```
+### Run vst 
+```{r}
+library("vsn")
+#vsd = varianceStabilizingTransformation(dds, fitType="parametric")
+#meanSdPlot(assay(vsd))
+```
+```{r}
+#vsd = varianceStabilizingTransformation(dds, fitType="mean")
+#meanSdPlot(assay(vsd))
+```
+```{r}
+vsd = varianceStabilizingTransformation(dds, fitType="local")
+meanSdPlot(assay(vsd))
+```
+Keeping the type local
+```{r}
+#meanSdPlot(assay(vsd))
+```
+
+## Extract GRAMD1B information and calculate high/low groups based on mean value
+```{r}
+#vstNormalizedExpressionData = assay(vsd)
+geneName<-"GRAMD1B"
+select<-"ENSG00000023171"
+#extract expression of this gene
+expressionData <- data.frame(assay(vsd)[select, ])
+#Replace ENSEMBL IDs with corresponding gene names
+names(expressionData) <- geneName
+stand.fun <- function(x){(x-mean(x,na.rm=TRUE))/sd(x,na.rm=TRUE)}
+stdSignature<-stand.fun(expressionData$GRAMD1B)
+names(stdSignature)<-rownames(expressionData) #make sure they retain the name of the samples
+clinicalData$Signature<- stdSignature[rownames(clinicalData)] #merge signature in clinical data frame
+```
+
+```{r}
+#Divide in high/low groups based on mean value
+co_mean<-mean(clinicalData$Signature)
+clinicalData$SignatureGroupMean <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_mean), "High", "Low"))
+```
+
+## Perform survival analysis
+```{r}
+library('survival')
+clinicalData$survival_d_rc = Surv(time  = (clinicalData$X_OS)/365.25,
+                              event = as.numeric(clinicalData$X_OS_IND))
+```
+
+### Univariate survival analysis
+```{r}
+library(survminer)
+fit <- survfit( survival_d_rc ~ SignatureGroupMean, 
+      data = clinicalData )
+# KM curve for signature
+pdf(paste("~/Desktop/Melanoma/Shruthy/GRAMD1B/results/survival/TCGA_", tissue, "_OS_K-M_curve.pdf", sep=""), width = 3.15, height = 3.15, family="sans", pointsize=7)
+plot(fit, col = c("blue", "red"), xlab = "Time (years)", ylab = "Survival probability", lwd=2)
+pvalStr = survminer::surv_pvalue(fit = fit, data = clinicalData)$pval
+if(pvalStr>=0.0001){
+   pvalStr=round(pvalStr, digits = 4)
+} else{
+  pvalStr=formatC(pvalStr, format = "e", digits = 2) 
+}
+text(x= 5, y=0.1, paste0("p=", pvalStr))
+legend("topright", col = c("blue", "red"), legend = c("High", "Low"), lty = 1, lwd=2)
+dev.off()
+```
+
+### Multivariate survival analysis
+```{r}
+tcga_surv = data.frame()
+fit = coef(summary(coxph(survival_d_rc ~ Signature,data=clinicalData)))
+mid  = fit["Signature",c("exp(coef)")]
+low  = exp(fit["Signature",c("coef")]-
+              qnorm(.975)*fit["Signature",c("se(coef)")])                   
+high = exp(fit["Signature",c("coef")]+
+              qnorm(.975)*fit["Signature",c("se(coef)")])  
+pval = fit["Signature",c("Pr(>|z|)")]
+tcga_surv["Signature",c("HR","low","high","pval")] = c(mid,low,high,pval)
+
+fit = coef(summary(coxph(survival_d_rc ~ Signature+gender+age_at_initial_pathologic_diagnosis+pathologic_stage,
+                         data=clinicalData)))
+mid  = fit["Signature",c("exp(coef)")]
+low  = exp(fit["Signature",c("coef")]-
+              qnorm(.975)*fit["Signature",c("se(coef)")])                   
+high = exp(fit["Signature",c("coef")]+
+              qnorm(.975)*fit["Signature",c("se(coef)")])  
+pval = fit["Signature",c("Pr(>|z|)")]
+tcga_surv["Signature+Sex+Age+Stage",c("HR","low","high","pval")] = c(mid,low,high,pval)
+
+fit = coef(summary(coxph(survival_d_rc ~ Signature+gender+age_at_initial_pathologic_diagnosis+breslow_depth_value,
+                         data=clinicalData)))
+mid  = fit["Signature",c("exp(coef)")]
+low  = exp(fit["Signature",c("coef")]-
+              qnorm(.975)*fit["Signature",c("se(coef)")])                   
+high = exp(fit["Signature",c("coef")]+
+              qnorm(.975)*fit["Signature",c("se(coef)")])  
+pval = fit["Signature",c("Pr(>|z|)")]
+tcga_surv["Signature+Sex+Age+Breslow",c("HR","low","high","pval")] = c(mid,low,high,pval)
+
+tcga_surv$Group = rownames(tcga_surv)
+```
+
+```{r}
+tcga_surv$Group <- factor(tcga_surv$Group, levels = c("Signature+Sex+Age+Breslow", "Signature+Sex+Age+Stage", "Signature"))
+
+if(pvalStr>=0.0001){
+   pvalStr=round(pvalStr, digits = 4)
+} else{
+  pvalStr=formatC(pvalStr, format = "e", digits = 2) 
+}
+
+g1 <- ggplot(data=tcga_surv,
+       aes(x = Group,y = HR, ymin = low, ymax = high, label = #paste("p-value=",formatC(pval,format="e"), sep = "")))+
+   ifelse(pval>=0.0001, paste("p=",round(pval, 4), sep = ""), paste("p=",formatC(pval, format = "e", digits = 2), sep = ""))))+
+   geom_pointrange()+
+   geom_hline(yintercept =1, linetype=2)+
+   xlab('')+
+   ylab('')+
+   ylab("Hazard Ratio (95% Confidence Interval)")+
+   geom_errorbar(aes(ymin=low, ymax=high),width=0.2,cex=1)+ 
+   ylim(c(0,4))+
+   geom_text(hjust = 1.1, vjust=-1.25, size=2.5,  family="sans")+
+   coord_flip()+
+   theme(text=element_text(size=7,  family="sans"))
+   #theme_set(ggpubr::theme_pubr(base_size=10, legend='bottom'))
+ggsave(paste("~/Desktop/Melanoma/Shruthy/GRAMD1B/results/survival/TCGA_", tissue, "_OS_ForestPlots.pdf", sep=""), device = "pdf", width = 10, units = "cm", height=4.5)
+```
