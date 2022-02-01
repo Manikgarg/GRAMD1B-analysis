@@ -572,8 +572,9 @@ if (tissue=="Skin") {
                 "+ECOG",
                 "+treatment",
                 "+as.numeric(Nclass)",
-                "+Sex+Age+as.character(Stage)+ECOG+treatment+as.numeric(Nclass)",
-                "+Sex+Age+as.character(Stage)+ECOG+treatment+as.numeric(Nclass)+ClarkScore")}else{
+                "+NRAS",
+                "+Sex+Age+as.character(Stage)+ECOG+treatment+as.numeric(Nclass)+NRAS",
+                "+Sex+Age+as.character(Stage)+ECOG+treatment+as.numeric(Nclass)+NRAS+ClarkScore")}else{
                   combinations<-c("", 
                 "+Sex",
                 "+Age",
@@ -581,7 +582,8 @@ if (tissue=="Skin") {
                 "+ECOG",
                 "+treatment",
                 "+as.numeric(Nclass)",
-                "+Sex+Age+as.character(Stage)+ECOG+treatment+as.numeric(Nclass)")}
+                "+NRAS",
+                "+Sex+Age+as.character(Stage)+ECOG+treatment+as.numeric(Nclass)+NRAS")}
 
 for (combination in combinations) {
   #Add TIL score if tissue = Skin, otherwise, omit
@@ -621,16 +623,18 @@ if (tissue=="Skin") {
              "GRAMD1B+ECOG", 
              "GRAMD1B+Treatment", 
              "GRAMD1B+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+\nTIL count"), levels=c("GRAMD1B", 
+             "GRAMD1B+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS+\nTIL count"), levels=c("GRAMD1B", 
              "GRAMD1B+Sex", 
              "GRAMD1B+Age", 
              "GRAMD1B+Stage", 
              "GRAMD1B+ECOG", 
              "GRAMD1B+Treatment", 
              "GRAMD1B+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+\nTIL count"))
+             "GRAMD1B+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS+\nTIL count"))
   pfs$Group<- factor(c("GRAMD1B", 
              "GRAMD1B+Sex", 
              "GRAMD1B+Age", 
@@ -638,16 +642,18 @@ if (tissue=="Skin") {
              "GRAMD1B+ECOG", 
              "GRAMD1B+Treatment", 
              "GRAMD1B+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+\nTIL count"), levels=c("GRAMD1B", 
+             "GRAMD1B+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS+\nTIL count"), levels=c("GRAMD1B", 
              "GRAMD1B+Sex", 
              "GRAMD1B+Age", 
              "GRAMD1B+Stage", 
              "GRAMD1B+ECOG", 
              "GRAMD1B+Treatment", 
              "GRAMD1B+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+\nTIL count"))}else{
+             "GRAMD1B+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS+\nTIL count"))}else{
   os$Group<- factor(c("GRAMD1B", 
              "GRAMD1B+Sex", 
              "GRAMD1B+Age", 
@@ -655,14 +661,16 @@ if (tissue=="Skin") {
              "GRAMD1B+ECOG", 
              "GRAMD1B+Treatment", 
              "GRAMD1B+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass"), levels=c("GRAMD1B", 
+             "GRAMD1B+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS"), levels=c("GRAMD1B", 
              "GRAMD1B+Sex", 
              "GRAMD1B+Age", 
              "GRAMD1B+Stage", 
              "GRAMD1B+ECOG", 
              "GRAMD1B+Treatment", 
              "GRAMD1B+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass"))
+             "GRAMD1B+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS"))
   pfs$Group<- factor(c("GRAMD1B", 
              "GRAMD1B+Sex", 
              "GRAMD1B+Age", 
@@ -670,14 +678,16 @@ if (tissue=="Skin") {
              "GRAMD1B+ECOG", 
              "GRAMD1B+Treatment", 
              "GRAMD1B+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass"), levels=c("GRAMD1B", 
+             "GRAMD1B+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS"), levels=c("GRAMD1B", 
              "GRAMD1B+Sex", 
              "GRAMD1B+Age", 
              "GRAMD1B+Stage", 
              "GRAMD1B+ECOG", 
              "GRAMD1B+Treatment", 
              "GRAMD1B+Nclass",
-             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass"))}
+             "GRAMD1B+NRAS",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+NRAS"))}
 
 df = rbind(os, pfs)
 df$Group = as.factor(df$Group)
@@ -701,10 +711,10 @@ g3 <- ggplot(data=df,
     theme(text=element_text(size=7,  family="sans"), legend.position = "top")
    #theme_set(ggpubr::theme_pubr(base_size=10, legend='bottom'))
 
-ggsave(paste("../results/survival/AVAST-M_",tissue,"_OS_PFS_ForestPlots.pdf", sep=""), device = "pdf", width = 10, units = "cm", height=12)
+ggsave(paste("../results/survival/AVAST-M_",tissue,"_OS_PFS_ForestPlots_withNRAS.pdf", sep=""), device = "pdf", width = 10, units = "cm", height=12)
 
 
 #Save the values
-write.table(os, paste("../results/survival/AVAST-M_",tissue,"_OS_multivariate.tsv", sep=""), sep="\t", col.names = T, row.names = F)
-write.table(pfs, paste("../results/survival/AVAST-M_",tissue,"_PFS_multivariate.tsv", sep=""), sep="\t", col.names = T, row.names = F)
+write.table(os, paste("../results/survival/AVAST-M_",tissue,"_OS_multivariate_withNRAS.tsv", sep=""), sep="\t", col.names = T, row.names = F)
+write.table(pfs, paste("../results/survival/AVAST-M_",tissue,"_PFS_multivariate_withNRAS.tsv", sep=""), sep="\t", col.names = T, row.names = F)
 ```
