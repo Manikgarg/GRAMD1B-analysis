@@ -52,13 +52,19 @@ clinicalData<-data.frame(colData(vsd))
 clinicalData$Signature<- stdSignature[rownames(clinicalData)] #merge signature in clinical data frame
 ```
 
+```{r}
+#Divide in high/low groups based on mean value
+co_mean<-mean(clinicalData$Signature)
+clinicalData$SignatureGroupMean <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_mean), "High", "Low"))
+```
+
 #Check association of GRAMD1B with relapse
 ```{r}
 my_comparisons <- list( c("Yes", "No"))
 ggplot(clinicalData[!is.na(clinicalData$EventMet),], aes(x=EventMet, y=Signature))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("Distant metastases (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -71,7 +77,7 @@ Find suitable cut-off. After talking to Roy, it seems that we could go for a wei
 Let's check the median value. May be I can take the median cut-off and perform chi-squared test to check if there is no difference between the mean of 2 groups?
 ```{r}
 #Divide in high/low groups based on mean and median
-co_mean<-mean(clinicalData$Signature)
+#co_mean<-mean(clinicalData$Signature)
 co_median<-median(clinicalData$Signature)
 co_0_33<-quantile(clinicalData$Signature, 0.33)
 co_0_66<-quantile(clinicalData$Signature, 0.66)
@@ -89,7 +95,7 @@ ggplotly(p)
 ```
 
 ```{r}
-clinicalData$SignatureGroupMean <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_mean), "High", "Low"))
+#clinicalData$SignatureGroupMean <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_mean), "High", "Low"))
 clinicalData$SignatureGroupMedian <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_median), "High", "Low"))
 clinicalData$SignatureGroup0_33 <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_0_33), "High", "Low"))
 clinicalData$SignatureGroup0_66 <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_0_66), "High", "Low"))
@@ -113,7 +119,7 @@ my_comparisons <- list( c("Present", "Absent"))
 ggplot(clinicalData[!is.na(clinicalData$Ulc),], aes(x=Ulc, y=Signature))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("Ulc (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -128,7 +134,7 @@ my_comparisons <- list( c("<= 2.0 mm", ">2-4mm"), c("<= 2.0 mm", ">4.0mm"), c(">
 ggplot(clinicalData[!is.na(clinicalData$Bres),], aes(x=Bres, y=Signature))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("Bres (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -146,7 +152,7 @@ my_comparisons <- list( c("IIB", "IIC"), c("IIB", "IIIA"), c("IIB", "IIIB"), c("
 ggplot(clinicalData[!is.na(clinicalData$Stage),], aes(x=Stage, y=Signature))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("Stage (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -158,7 +164,7 @@ ggplot(clinicalData[!is.na(clinicalData$Stage),], aes(x=Stage, y=Signature))+
 ggplot(clinicalData[!is.na(clinicalData$Stage_binary),], aes(x=Stage_binary, y=Signature))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("Stage (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -175,7 +181,7 @@ my_comparisons <- list( c("Head and neck", "Lower lims"), c("Head and neck", "Tr
 ggplot(clinicalData[!is.na(clinicalData$Site),], aes(x=Site, y=Signature))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("Site (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -191,7 +197,7 @@ my_comparisons <- list( c("V600E", "WT"))
 ggplot(clinicalData[!is.na(clinicalData$BRAF),], aes(x=BRAF, y=Signature))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("BRAF (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -206,7 +212,7 @@ my_comparisons <- list( c("Mutant", "WT"))
 ggplot(clinicalData[!is.na(clinicalData$NRAS),], aes(x=NRAS, y=Signature))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("NRAS (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -250,7 +256,7 @@ ggplot(df[!is.na(df$ClarkScore), ], aes(x=ClarkScore, y=Signature#, color=DRBrai
                                         ))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("Clark score (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(df$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -283,7 +289,7 @@ ggplot(df[!is.na(df$MIAScore), ], aes(x=MIAScore, y=Signature#, color=DRBrain
 ggplot(clinicalData[!is.na(clinicalData$treatment),], aes(x=treatment, y=Signature))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("Treatment (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -296,7 +302,7 @@ ggplot(clinicalData[!is.na(clinicalData$treatment),], aes(x=treatment, y=Signatu
 ggplot(clinicalData[!is.na(clinicalData$ECOG),], aes(x=ECOG, y=Signature))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("ECOG (AVAST-M Skin)")+
   ylab("VST normalized GRAMD1B expression (stand.)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
@@ -307,7 +313,9 @@ ggplot(clinicalData[!is.na(clinicalData$ECOG),], aes(x=ECOG, y=Signature))+
 #Check the trend of NFKB pathway with GRAMD1B signature
 
 ```{r}
-HALLMARK_TNFA_SIGNALING_VIA_NFKB_genes<- c('JUNB','CXCL2','ATF3','NFKBIA','TNFAIP3','PTGS2','CXCL1','IER3','CD83','CCL20','CXCL3','MAFF','NFKB2','TNFAIP2','HBEGF','KLF6','BIRC3','PLAUR','ZFP36','ICAM1','JUN','EGR3','IL1B','BCL2A1','PPP1R15A','ZC3H12A','SOD2','NR4A2','IL1A','RELB','TRAF1','BTG2','DUSP1','MAP3K8','ETS2','F3','SDC4','EGR1','IL6','TNF','KDM6B','NFKB1','LIF','PTX3','FOSL1','NR4A1','JAG1','CCL4','GCH1','CCL2','RCAN1','DUSP2','EHD1','IER2','REL','CFLAR','RIPK2','NFKBIE','NR4A3','PHLDA1','IER5','TNFSF9','GEM','GADD45A','CXCL10','PLK2','BHLHE40','EGR2','SOCS3','SLC2A6','PTGER4','DUSP5','SERPINB2','NFIL3','SERPINE1','TRIB1','TIPARP','RELA','BIRC2','CXCL6','LITAF','TNFAIP6','CD44','INHBA','PLAU','MYC','TNFRSF9','SGK1','TNIP1','NAMPT','FOSL2','PNRC1','ID2','CD69','IL7R','EFNA1','PHLDA2','PFKFB3','CCL5','YRDC','IFNGR2','SQSTM1','BTG3','GADD45B','KYNU','G0S2','BTG1','MCL1','VEGFA','MAP2K3','CDKN1A','TANK','IFIT2','IL18','TUBB2A','IRF1','FOS','OLR1','RHOB','AREG','NINJ1','ZBTB10','PLPP3','KLF4','CXCL11','SAT1','CSF1','GPR183','PMEPA1','PTPRE','TLR2','ACKR3','KLF10','MARCKS','LAMB3','CEBPB','TRIP10','F2RL1','KLF9','LDLR','TGIF1','RNF19B','DRAM1','B4GALT1','DNAJB4','CSF2','PDE4B','SNN','PLEK','STAT5A','DENND5A','CCND1','DDX58','SPHK1','CD80','TNFAIP8','CCNL1','FUT4','CCRL2','SPSB1','TSC22D1','B4GALT5','SIK1','CLCF1','NFE2L2','FOSB','PER1','NFAT5','ATP2B1','IL12B','IL6ST','SLC16A6','ABCA1','HES1','BCL6','IRS2','SLC2A3','CEBPD','IL23A','SMAD3','TAP1','MSC','IFIH1','IL15RA','TNIP2','BCL3','PANX1','FJX1','EDN1','EIF1','BMP2','DUSP4','PDLIM5','ICOSLG','GFPT2','KLF2','TNC','SERPINB8','MXD1')
+#HALLMARK_TNFA_SIGNALING_VIA_NFKB_genes<- c('JUNB','CXCL2','ATF3','NFKBIA','TNFAIP3','PTGS2','CXCL1','IER3','CD83','CCL20','CXCL3','MAFF','NFKB2','TNFAIP2','HBEGF','KLF6','BIRC3','PLAUR','ZFP36','ICAM1','JUN','EGR3','IL1B','BCL2A1','PPP1R15A','ZC3H12A','SOD2','NR4A2','IL1A','RELB','TRAF1','BTG2','DUSP1','MAP3K8','ETS2','F3','SDC4','EGR1','IL6','TNF','KDM6B','NFKB1','LIF','PTX3','FOSL1','NR4A1','JAG1','CCL4','GCH1','CCL2','RCAN1','DUSP2','EHD1','IER2','REL','CFLAR','RIPK2','NFKBIE','NR4A3','PHLDA1','IER5','TNFSF9','GEM','GADD45A','CXCL10','PLK2','BHLHE40','EGR2','SOCS3','SLC2A6','PTGER4','DUSP5','SERPINB2','NFIL3','SERPINE1','TRIB1','TIPARP','RELA','BIRC2','CXCL6','LITAF','TNFAIP6','CD44','INHBA','PLAU','MYC','TNFRSF9','SGK1','TNIP1','NAMPT','FOSL2','PNRC1','ID2','CD69','IL7R','EFNA1','PHLDA2','PFKFB3','CCL5','YRDC','IFNGR2','SQSTM1','BTG3','GADD45B','KYNU','G0S2','BTG1','MCL1','VEGFA','MAP2K3','CDKN1A','TANK','IFIT2','IL18','TUBB2A','IRF1','FOS','OLR1','RHOB','AREG','NINJ1','ZBTB10','PLPP3','KLF4','CXCL11','SAT1','CSF1','GPR183','PMEPA1','PTPRE','TLR2','ACKR3','KLF10','MARCKS','LAMB3','CEBPB','TRIP10','F2RL1','KLF9','LDLR','TGIF1','RNF19B','DRAM1','B4GALT1','DNAJB4','CSF2','PDE4B','SNN','PLEK','STAT5A','DENND5A','CCND1','DDX58','SPHK1','CD80','TNFAIP8','CCNL1','FUT4','CCRL2','SPSB1','TSC22D1','B4GALT5','SIK1','CLCF1','NFE2L2','FOSB','PER1','NFAT5','ATP2B1','IL12B','IL6ST','SLC16A6','ABCA1','HES1','BCL6','IRS2','SLC2A3','CEBPD','IL23A','SMAD3','TAP1','MSC','IFIH1','IL15RA','TNIP2','BCL3','PANX1','FJX1','EDN1','EIF1','BMP2','DUSP4','PDLIM5','ICOSLG','GFPT2','KLF2','TNC','SERPINB8','MXD1')
+
+HALLMARK_TNFA_SIGNALING_VIA_NFKB_genes<-c('CCL2','IL1A','BIRC3','PTX3','CXCL1','LIF','IRS2','RCAN1','CSF1','INHBA','BMP2','MAFF','TNFSF9','GADD45A','SERPINB8','IL1B','ICAM1','DUSP2','HBEGF','BCL2A1','CD44','BIRC2','IL23A','PLPP3','RELB','CCL20','TNFAIP3','EGR2','PPP1R15A','TRAF1','TNFRSF9','EDN1','CD83','SQSTM1','EGR3','IFIH1','YRDC','MAP3K8','PLAUR','RNF19B','SAT1','KYNU','CXCL3','TAP1','LAMB3','FOSL1','NFKBIE','KLF2','TUBB2A','SDC4','MAP2K3','FJX1','NR4A3','CXCL10','F3','EGR1','CSF2','TRIB1','BTG3','IFNGR2','GCH1','EIF1')
 ensembl_ids<-res.annot$id[res.annot$Name%in% HALLMARK_TNFA_SIGNALING_VIA_NFKB_genes]
 expressionDataForHallmark<-data.frame(assay(vsd)[ensembl_ids, ])
 #Calculate average value per sample
@@ -321,9 +329,9 @@ clinicalData$HALLMARK_TNFA_SIGNALING_VIA_NFKB_genes_groups<-ifelse(clinicalData$
 ggplot(clinicalData, aes(x=SignatureGroupMean, y=HALLMARK_TNFA_SIGNALING_VIA_NFKB_genes))+
   geom_violin()+
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
-  #scale_fill_brewer(type="qual", palette = "Dark2", name = "Cam_121 risk group")+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
   xlab("GRAMD1B groups")+
-  ylab("HALLMARK_TNFA_SIGNALING_VIA_NFKB\n(Stand. median VST normalized gene expression)")+
+  ylab("NFKB UP in KO\n(Stand. median VST normalized gene expression)")+
   #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
   theme(text=element_text(size=7,  family="sans"))+
   geom_hline(yintercept = 0, linetype="dashed")+
@@ -482,16 +490,73 @@ clinicalData$survival_d_ltrc = Surv(time  = as.numeric(difftime(clinicalData$DOE
 clinicalData$survival_rd_ltrc = Surv(time  = as.numeric(difftime(clinicalData$DOE, clinicalData$DDiag))/365.25,
                                      time2 = as.numeric(difftime(apply(clinicalData[, c("DOC", "DDistMets")],1,min,na.rm=TRUE), clinicalData$DDiag))/365.25,
                                      event = ifelse((clinicalData$Dead == FALSE & clinicalData$EventMet == "No"), 0, 1))
+```
+## Plot univariate survival curves
+```{r}
+library(survminer)
+#Overall survival
+fit = survfit(survival_d_ltrc ~ as.factor(SignatureGroupMean), data = clinicalData)
+# g1<- autoplot(fit, pval = TRUE)+
+#    ylab("Survival")+
+#    scale_color_manual(values = c("#E31A1C", "#1F78B4"), name = "Group")+
+#    scale_fill_manual(values = c("#E31A1C", "#1F78B4"), name = "Group")
 
-if(tissue=="Skin"){
-  jt_ns_sm_scores = read.table("../JT_NS_SM_Combined.xls - JT_NS_SM.tsv", sep = "\t", header = TRUE, quote = "")
-  combinedScore <- data.frame("Scanned_file.me"= jt_ns_sm_scores$JT_Scanned_file.me, 
-                              "R.Seq_sampleID"= jt_ns_sm_scores$JT_R.Seq_sampleID, 
+survivalModel<-coxph(survival_d_ltrc~as.factor(SignatureGroupMean), data = clinicalData)
+x <- summary(survivalModel)
+pvalStr<- signif(x$coef[1, ncol(x$coef)], digits = 5)
+#survminer::surv_pvalue(fit = fit, data = clinicalData)$pval
+# KM curve for signature
+pdf(paste("~/Desktop/Melanoma/Shruthy/GRAMD1B/results/survival/AVAST-M_",tissue,"_GRAMD1B_OS_K-M_curve.pdf", sep=""), width = 3.15, height = 3.15, family="sans", pointsize=7)
+plot(fit, col = c("blue", "red"), xlab = "Time (years)", ylab = "Survival probability", lwd=2)
+if(pvalStr>=0.0001){
+   pvalStr=round(pvalStr, digits = 4)
+} else{
+  pvalStr=formatC(pvalStr, format = "e", digits = 2) 
+}
+text(x= 5, y=0.1, paste0("p=", pvalStr))
+legend("topright", col = c("blue", "red"), legend = c("High", "Low"), lty = 1, lwd=2)
+dev.off()
+
+
+fit = survfit(survival_rd_ltrc ~ as.factor(SignatureGroupMean), data = clinicalData)
+# g1<- autoplot(fit, pval = TRUE)+
+#    ylab("Survival")+
+#    scale_color_manual(values = c("#E31A1C", "#1F78B4"), name = "Group")+
+#    scale_fill_manual(values = c("#E31A1C", "#1F78B4"), name = "Group")
+
+survivalModel<-coxph(survival_rd_ltrc~as.factor(SignatureGroupMean), data = clinicalData)
+x <- summary(survivalModel)
+pvalStr<- signif(x$coef[1, ncol(x$coef)], digits = 5)
+#survminer::surv_pvalue(fit = fit, data = clinicalData)$pval
+# KM curve for signature
+pdf(paste("~/Desktop/Melanoma/Shruthy/GRAMD1B/results/survival/AVAST-M_",tissue,"_GRAMD1B_PFS_K-M_curve.pdf", sep=""), width = 3.15, height = 3.15, family="sans", pointsize=7)
+plot(fit, col = c("blue", "red"), xlab = "Time (years)", ylab = "Survival probability", lwd=2)
+if(pvalStr>=0.0001){
+   pvalStr=round(pvalStr, digits = 4)
+} else{
+  pvalStr=formatC(pvalStr, format = "e", digits = 2) 
+}
+text(x= 2, y=0.05, paste0("p=", pvalStr))
+legend("topright", col = c("blue", "red"), legend = c("High", "Low"), lty = 1, lwd=2)
+dev.off()
+```
+
+## then calculate the values for multivariate survival analysis and make forest plot
+```{r}
+os<-data.frame()
+pfs<-data.frame()
+temp<-data.frame()
+
+if (tissue=="Skin") {
+  if(!("ClarkScore"%in%colnames(clinicalData))){
+    jt_ns_sm_scores = read.table("~/Desktop/Melanoma/JT_NS_SM_Combined.xls - JT_NS_SM.tsv", sep = "\t", header = TRUE, quote = "")
+  combinedScore <- data.frame("Scanned_file.me"= jt_ns_sm_scores$JT_Scanned_file.me,
+                              "R.Seq_sampleID"= jt_ns_sm_scores$JT_R.Seq_sampleID,
                               "ClarkScore"=ifelse(jt_ns_sm_scores$JT_Clark_score==jt_ns_sm_scores$NS_Clark_score,
-                                                  jt_ns_sm_scores$JT_Clark_score, 
+                                                  jt_ns_sm_scores$JT_Clark_score,
                                                   jt_ns_sm_scores$SM_Clark_score),
                            "MIAScore"= ifelse(jt_ns_sm_scores$JT_TIL_grade==jt_ns_sm_scores$NS_TIL.GRADE,
-                                              jt_ns_sm_scores$JT_TIL_grade, 
+                                              jt_ns_sm_scores$JT_TIL_grade,
                                               jt_ns_sm_scores$SM_TIL_grade))
   #Remove duplicated entries
   combinedScore<-combinedScore[!duplicated(combinedScore$R.Seq_sampleID), ]
@@ -499,27 +564,30 @@ if(tissue=="Skin"){
   combinedScore$ClarkScore <- as.factor(combinedScore$ClarkScore)
   levels(combinedScore$ClarkScore) <- c("absent", "nonbrisk", "brisk")
   clinicalData<-merge(clinicalData, combinedScore, by.x="RNA.Seq.Sample", by.y="R.Seq_sampleID")
-  rownames(clinicalData)<-clinicalData$RNA.Seq.Sample
-}
-```
-
-## then calculate the values
-```{r}
-os<-data.frame()
-pfs<-data.frame()
-temp<-data.frame()
-
-combinations<-c("Signature", "SignatureGroupMean", "SignatureGroupMedian", "SignatureGroup0_33", "SignatureGroup0_66", "SignatureGroupDensityIntersection")
+  rownames(clinicalData)<-clinicalData$RNA.Seq.Sample}
+  combinations<-c("", 
+                "+Sex",
+                "+Age",
+                "+as.character(Stage)",
+                "+ECOG",
+                "+treatment",
+                "+as.numeric(Nclass)",
+                "+Sex+Age+as.character(Stage)+ECOG+treatment+as.numeric(Nclass)",
+                "+Sex+Age+as.character(Stage)+ECOG+treatment+as.numeric(Nclass)+ClarkScore")}else{
+                  combinations<-c("", 
+                "+Sex",
+                "+Age",
+                "+as.character(Stage)",
+                "+ECOG",
+                "+treatment",
+                "+as.numeric(Nclass)",
+                "+Sex+Age+as.character(Stage)+ECOG+treatment+as.numeric(Nclass)")}
 
 for (combination in combinations) {
-  if (tissue=="Skin") {
-    os_formula<-paste0("survival_d_ltrc~",combination,"+Sex+Age+as.numeric(Nclass)+as.character(Stage)+ECOG+treatment+ClarkScore")
-    pfs_formula<-paste0("survival_rd_ltrc~",combination,"+Sex+Age+as.numeric(Nclass)+as.character(Stage)+ECOG+treatment+ClarkScore")
-  } else{
-    os_formula<-paste0("survival_d_ltrc~",combination,"+Sex+Age+as.numeric(Nclass)+as.character(Stage)+ECOG+treatment")
-    pfs_formula<-paste0("survival_rd_ltrc~",combination,"+Sex+Age+as.numeric(Nclass)+as.character(Stage)+ECOG+treatment")
-  }
-  
+  #Add TIL score if tissue = Skin, otherwise, omit
+    os_formula<-paste0("survival_d_ltrc~Signature",combination, collapse = "")
+    pfs_formula<-paste0("survival_rd_ltrc~Signature",combination, collapse = "")
+  #Overall survival
   fit = coef(summary(coxph(as.formula(os_formula), data=clinicalData)))
   mid  = fit[1,c("exp(coef)")]
   low  = exp(fit[1,c("coef")]-
@@ -527,9 +595,10 @@ for (combination in combinations) {
   high = exp(fit[1,c("coef")]+
               qnorm(.975)*fit[1,c("se(coef)")])  
   pval = fit[1,c("Pr(>|z|)")]
-  temp["Signature",c("Signature", "HR","low","high","pval")] = c(rownames(fit)[1],mid,low,high,pval)
+  temp["Signature",c("Group", "Hazard_Ratio","Lower_HazardRatio","Upper_HazardRatio","p_value")] = c(paste0("GRAMD1B",combination, collapse = ""),mid,low,high,pval)
   os<-rbind(os, temp)
   
+  #Progression-free survival
   fit = coef(summary(coxph(as.formula(pfs_formula), data=clinicalData)))
   mid  = fit[1,c("exp(coef)")]
   low  = exp(fit[1,c("coef")]-
@@ -537,10 +606,105 @@ for (combination in combinations) {
   high = exp(fit[1,c("coef")]+
               qnorm(.975)*fit[1,c("se(coef)")])  
   pval = fit[1,c("Pr(>|z|)")]
-  temp["Signature",c("Signature", "HR","low","high","pval")] = c(rownames(fit)[1],mid,low,high,pval)
+  temp["Signature",c("Group", "Hazard_Ratio","Lower_HazardRatio","Upper_HazardRatio","p_value")] = c(paste0("GRAMD1B",combination, collapse = ""),mid,low,high,pval)
   pfs<-rbind(pfs, temp)
 }
 
-write.table(os, paste("../results/survival/AVAST-M_",tissue,"_os.tsv", sep=""), sep="\t", col.names = T, row.names = F)
-write.table(pfs, paste("../results/survival/AVAST-M_",tissue,"_pfs.tsv", sep=""), sep="\t", col.names = T, row.names = F)
+#Forest plot for OS and PFS
+os$Event<-"OS"
+pfs$Event<-"PFS"
+if (tissue=="Skin") {
+  os$Group<- factor(c("GRAMD1B", 
+             "GRAMD1B+Sex", 
+             "GRAMD1B+Age", 
+             "GRAMD1B+Stage", 
+             "GRAMD1B+ECOG", 
+             "GRAMD1B+Treatment", 
+             "GRAMD1B+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+\nTIL count"), levels=c("GRAMD1B", 
+             "GRAMD1B+Sex", 
+             "GRAMD1B+Age", 
+             "GRAMD1B+Stage", 
+             "GRAMD1B+ECOG", 
+             "GRAMD1B+Treatment", 
+             "GRAMD1B+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+\nTIL count"))
+  pfs$Group<- factor(c("GRAMD1B", 
+             "GRAMD1B+Sex", 
+             "GRAMD1B+Age", 
+             "GRAMD1B+Stage", 
+             "GRAMD1B+ECOG", 
+             "GRAMD1B+Treatment", 
+             "GRAMD1B+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+\nTIL count"), levels=c("GRAMD1B", 
+             "GRAMD1B+Sex", 
+             "GRAMD1B+Age", 
+             "GRAMD1B+Stage", 
+             "GRAMD1B+ECOG", 
+             "GRAMD1B+Treatment", 
+             "GRAMD1B+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass+\nTIL count"))}else{
+  os$Group<- factor(c("GRAMD1B", 
+             "GRAMD1B+Sex", 
+             "GRAMD1B+Age", 
+             "GRAMD1B+Stage", 
+             "GRAMD1B+ECOG", 
+             "GRAMD1B+Treatment", 
+             "GRAMD1B+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass"), levels=c("GRAMD1B", 
+             "GRAMD1B+Sex", 
+             "GRAMD1B+Age", 
+             "GRAMD1B+Stage", 
+             "GRAMD1B+ECOG", 
+             "GRAMD1B+Treatment", 
+             "GRAMD1B+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass"))
+  pfs$Group<- factor(c("GRAMD1B", 
+             "GRAMD1B+Sex", 
+             "GRAMD1B+Age", 
+             "GRAMD1B+Stage", 
+             "GRAMD1B+ECOG", 
+             "GRAMD1B+Treatment", 
+             "GRAMD1B+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass"), levels=c("GRAMD1B", 
+             "GRAMD1B+Sex", 
+             "GRAMD1B+Age", 
+             "GRAMD1B+Stage", 
+             "GRAMD1B+ECOG", 
+             "GRAMD1B+Treatment", 
+             "GRAMD1B+Nclass",
+             "GRAMD1B+Sex+Age+Stage+\nECOG+treatment+Nclass"))}
+
+df = rbind(os, pfs)
+df$Group = as.factor(df$Group)
+df$Group = factor(df$Group, levels = rev(levels(df$Group)))
+df$Event = as.factor(df$Event)
+df$p_value<-as.numeric(df$p_value)
+g3 <- ggplot(data=df,
+       aes(x = Group,y = as.numeric(Hazard_Ratio), ymin = as.numeric(Lower_HazardRatio), ymax = as.numeric(Upper_HazardRatio), 
+           color = Event,
+           label = ifelse(p_value>=0.0001, paste("p=",round(p_value, 4), sep = ""), paste("p=",formatC(p_value, format = "e", digits = 2), sep = ""))))+
+    geom_pointrange(position=position_dodge(width=0.5))+
+    geom_hline(yintercept =1, linetype=2)+
+    xlab('')+
+    ylab("Hazard Ratio (95% Confidence Interval)")+
+    geom_errorbar(aes(ymin=as.numeric(Lower_HazardRatio), ymax=as.numeric(Upper_HazardRatio)),width=0.1,cex=1, position=position_dodge(width=0.5))+ 
+    geom_text(hjust = -0.5, vjust=-0.5, position=position_dodge(width=0.5), size=2.5,  family="sans")+
+    #scale_y_continuous()+
+    ylim(c(0,4))+
+    scale_color_brewer(type = "qual", palette = "Set2")+
+    coord_flip()+
+    theme(text=element_text(size=7,  family="sans"), legend.position = "top")
+   #theme_set(ggpubr::theme_pubr(base_size=10, legend='bottom'))
+
+ggsave(paste("../results/survival/AVAST-M_",tissue,"_OS_PFS_ForestPlots.pdf", sep=""), device = "pdf", width = 10, units = "cm", height=12)
+
+
+#Save the values
+write.table(os, paste("../results/survival/AVAST-M_",tissue,"_OS_multivariate.tsv", sep=""), sep="\t", col.names = T, row.names = F)
+write.table(pfs, paste("../results/survival/AVAST-M_",tissue,"_PFS_multivariate.tsv", sep=""), sep="\t", col.names = T, row.names = F)
 ```
