@@ -15,8 +15,15 @@ suppressPackageStartupMessages(library("DESeq2"))
 #Note that we do not have Clark Scores or MIA scores for AVAST-M lymph node samples and these need to be commented out to avoid errors. 
 ```{r}
 #Load the data
-tissue<-c("Ln")
+tissue<-c("Skin")
 load(paste("~/Desktop/Melanoma/deseq2Results/tc",tissue,"EventMetNo_VS_tc",tissue,"EventMetYes_CovariateCorrection.deseq2/de.Rdata", sep=""))
+#expressionData <- data.frame(assay(vsd))
+#write.table(expressionData, "~/Desktop/Melanoma/AVAST-M_Skin-Primaries_VST_normalized_expression_data.csv", sep = ",", quote = F, row.names = T, col.names = T)
+```
+
+```{r}
+#expressionData <- data.frame(assay(vsd))
+#write.table(data.f, "~/Desktop/Melanoma/AVAST-M_Regional-Lymph-Node_raw_expression_data.csv", sep = ",", quote = F, row.names = T, col.names = T)
 ```
 
 ```{r}

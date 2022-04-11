@@ -39,14 +39,14 @@ rownames(clinicalDataSampleId) = paste("X.", make.names(clinicalDataSampleId$sam
 
 ### Subset for tissue
 ```{r}
-tissue<-c("Regional Cutaneous or Subcutaneous Tissue (includes satellite and in-transit metastasis)", "Primary Tumor")
+#tissue<-c("Regional Cutaneous or Subcutaneous Tissue (includes satellite and in-transit metastasis)", "Primary Tumor")
 #tissue<-"Regional Lymph Node"
-rawExpressionDataSubsetTissue = rawExpressionDataSubset[, colnames(rawExpressionDataSubset) %in% rownames(clinicalDataSampleId)[clinicalDataSampleId$tumor_tissue_site %in% tissue]]
+#rawExpressionDataSubsetTissue = rawExpressionDataSubset[, colnames(rawExpressionDataSubset) %in% rownames(clinicalDataSampleId)[clinicalDataSampleId$tumor_tissue_site %in% tissue]]
 
-clinicalData = clinicalDataSampleId[rownames(clinicalDataSampleId)%in%colnames(rawExpressionDataSubsetTissue), ]
+#clinicalData = clinicalDataSampleId[rownames(clinicalDataSampleId)%in%colnames(rawExpressionDataSubsetTissue), ]
 #Make sure that the clinical data is in the same order as the sample expression data
-seIdx = match(colnames(rawExpressionDataSubsetTissue), rownames(clinicalData))
-clinicalData = clinicalData[seIdx, ]
+seIdx = match(colnames(rawExpressionDataSubset), rownames(clinicalDataSampleId))
+clinicalData = clinicalDataSampleId[seIdx, ]
 ```
 
 ## Perform Variance stablization transformation
@@ -54,7 +54,7 @@ clinicalData = clinicalData[seIdx, ]
 ```{r}
 #Could run it with full list of genes to make it comparable to the transformation applied on AVAST-M dataset
 library("DESeq2")
-dds <- DESeqDataSetFromMatrix(countData = rawExpressionDataSubsetTissue,
+dds <- DESeqDataSetFromMatrix(countData = rawExpressionDataSubset,
                               colData = clinicalData,
                               design = ~ 1)
 dds
@@ -112,7 +112,7 @@ library(survminer)
 fit <- survfit( survival_d_rc ~ SignatureGroupMean, 
       data = clinicalData )
 # KM curve for signature
-pdf(paste("~/Desktop/Melanoma/Shruthy/GRAMD1B/results/survival/TCGA_", tissue, "_OS_K-M_curve.pdf", sep=""), width = 3.15, height = 3.15, family="sans", pointsize=7)
+pdf(paste("~/Desktop/Melanoma/Shruthy/GRAMD1B/results/survival/TCGA_all_OS_K-M_curve.pdf", sep=""), width = 3.15, height = 3.15, family="sans", pointsize=7)
 plot(fit, col = c("blue", "red"), xlab = "Time (years)", ylab = "Survival probability", lwd=2)
 pvalStr = survminer::surv_pvalue(fit = fit, data = clinicalData)$pval
 if(pvalStr>=0.0001){
@@ -183,5 +183,5 @@ g1 <- ggplot(data=tcga_surv,
    coord_flip()+
    theme(text=element_text(size=7,  family="sans"))
    #theme_set(ggpubr::theme_pubr(base_size=10, legend='bottom'))
-ggsave(paste("~/Desktop/Melanoma/Shruthy/GRAMD1B/results/survival/TCGA_", tissue, "_OS_ForestPlots.pdf", sep=""), device = "pdf", width = 10, units = "cm", height=4.5)
+ggsave(paste("~/Desktop/Melanoma/Shruthy/GRAMD1B/results/survival/TCGA_all_OS_ForestPlots.pdf", sep=""), device = "pdf", width = 10, units = "cm", height=4.5)
 ```
