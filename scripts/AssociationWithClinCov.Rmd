@@ -63,6 +63,9 @@ clinicalData$Signature<- stdSignature[rownames(clinicalData)] #merge signature i
 #Divide in high/low groups based on mean value
 co_mean<-mean(clinicalData$Signature)
 clinicalData$SignatureGroupMean <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_mean), "High", "Low"))
+
+#co_median<-median(clinicalData$Signature)
+#clinicalData$SignatureGroupMedian <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_median), "High", "Low"))
 ```
 
 #Check association of GRAMD1B with relapse
@@ -523,8 +526,9 @@ if(pvalStr>=0.0001){
 text(x= 5, y=0.1, paste0("p=", pvalStr))
 legend("topright", col = c("blue", "red"), legend = c("High", "Low"), lty = 1, lwd=2)
 dev.off()
+```
 
-
+```{r}
 fit = survfit(survival_rd_ltrc ~ as.factor(SignatureGroupMean), data = clinicalData)
 # g1<- autoplot(fit, pval = TRUE)+
 #    ylab("Survival")+
@@ -701,7 +705,8 @@ df$Group = as.factor(df$Group)
 df$Group = factor(df$Group, levels = rev(levels(df$Group)))
 df$Event = as.factor(df$Event)
 df$p_value<-as.numeric(df$p_value)
-g3 <- ggplot(data=df,
+
+g3<-ggplot(data=df,
        aes(x = Group,y = as.numeric(Hazard_Ratio), ymin = as.numeric(Lower_HazardRatio), ymax = as.numeric(Upper_HazardRatio), 
            color = Event,
            label = ifelse(p_value>=0.0001, paste("p=",round(p_value, 4), sep = ""), paste("p=",formatC(p_value, format = "e", digits = 2), sep = ""))))+
@@ -710,7 +715,7 @@ g3 <- ggplot(data=df,
     xlab('')+
     ylab("Hazard Ratio (95% Confidence Interval)")+
     geom_errorbar(aes(ymin=as.numeric(Lower_HazardRatio), ymax=as.numeric(Upper_HazardRatio)),width=0.1,cex=1, position=position_dodge(width=0.5))+ 
-    geom_text(hjust = -0.5, vjust=-0.5, position=position_dodge(width=0.5), size=2.5,  family="sans")+
+    geom_text(hjust = -1, vjust=-0.5, position=position_dodge(width=0.5), size=2.5,  family="sans")+
     #scale_y_continuous()+
     ylim(c(0,4))+
     scale_color_brewer(type = "qual", palette = "Set2")+
@@ -722,6 +727,6 @@ ggsave(paste("../results/survival/AVAST-M_",tissue,"_OS_PFS_ForestPlots_withNRAS
 
 
 #Save the values
-write.table(os, paste("../results/survival/AVAST-M_",tissue,"_OS_multivariate_withNRAS.tsv", sep=""), sep="\t", col.names = T, row.names = F)
-write.table(pfs, paste("../results/survival/AVAST-M_",tissue,"_PFS_multivariate_withNRAS.tsv", sep=""), sep="\t", col.names = T, row.names = F)
+#write.table(os, paste("../results/survival/AVAST-M_",tissue,"_OS_multivariate_withNRAS.tsv", sep=""), sep="\t", col.names = T, row.names = F)
+#write.table(pfs, paste("../results/survival/AVAST-M_",tissue,"_PFS_multivariate_withNRAS.tsv", sep=""), sep="\t", col.names = T, row.names = F)
 ```

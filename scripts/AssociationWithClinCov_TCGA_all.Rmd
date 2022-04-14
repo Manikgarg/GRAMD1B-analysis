@@ -75,7 +75,7 @@ meanSdPlot(assay(vsd))
 ```
 Keeping the type local
 ```{r}
-#meanSdPlot(assay(vsd))
+meanSdPlot(assay(vsd))
 ```
 
 ## Extract GRAMD1B information and calculate high/low groups based on mean value
