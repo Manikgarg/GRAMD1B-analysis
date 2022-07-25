@@ -37,6 +37,24 @@ clinicalDataSampleId = read.table("~/Downloads/Clinical_details.xlsx - Sheet2.ts
 rownames(clinicalDataSampleId) = paste("X.", make.names(clinicalDataSampleId$sampleID), ".", sep = "")
 ```
 
+```{r}
+#clinical data with mutation information
+clinicalData_mutation <- read.table("~/Downloads/skcm_tcga_pub_2015_clinical_data.tsv", sep = "\t", header = TRUE)
+#clinicalData_BRAF<-clinicalData_BRAF[clinicalData_BRAF$Study.ID=='skcm_tcga',]
+#Make sure that the clinical data is in the same order as expression data
+rownames(clinicalData_mutation) <- paste("X.", make.names(clinicalData_mutation$Sample.ID), ".", sep = "")
+```
+
+Merge BRAF mutation information with clinical data
+```{r}
+clinicalDataSampleId$Mutation<-clinicalData_mutation[rownames(clinicalDataSampleId), "Mutation.Type"]
+```
+
+```{r}
+clinicalDataSampleId$BRAF<- ifelse(clinicalDataSampleId$Mutation=="BRAF_Hotspot_Mutants", "Mutant", "WT")
+clinicalDataSampleId$NRAS<- ifelse(clinicalDataSampleId$Mutation=="RAS_Hotspot_Mutants", "Mutant", "WT")
+```
+
 ### Subset for tissue
 ```{r}
 #tissue<-c("Regional Cutaneous or Subcutaneous Tissue (includes satellite and in-transit metastasis)", "Primary Tumor")
@@ -97,6 +115,112 @@ clinicalData$Signature<- stdSignature[rownames(clinicalData)] #merge signature i
 #Divide in high/low groups based on mean value
 co_mean<-mean(clinicalData$Signature)
 clinicalData$SignatureGroupMean <- as.factor(ifelse(clinicalData$Signature >= as.numeric(co_mean), "High", "Low"))
+```
+
+## Repeat for PTEN information and calculate high/low groups based on mean value
+```{r}
+#vstNormalizedExpressionData = assay(vsd)
+geneName<-"PTEN"
+select<-"ENSG00000171862"
+#extract expression of this gene
+expressionData <- data.frame(assay(vsd)[select, ])
+#Replace ENSEMBL IDs with corresponding gene names
+names(expressionData) <- geneName
+stand.fun <- function(x){(x-mean(x,na.rm=TRUE))/sd(x,na.rm=TRUE)}
+stdSignature<-stand.fun(expressionData$PTEN)
+names(stdSignature)<-rownames(expressionData) #make sure they retain the name of the samples
+clinicalData$PTEN<- stdSignature[rownames(clinicalData)] #merge signature in clinical data frame
+```
+
+```{r}
+#Divide in high/low groups based on mean value
+co_mean<-mean(clinicalData$PTEN)
+clinicalData$PTENGroupMean <- as.factor(ifelse(clinicalData$PTEN >= as.numeric(co_mean), "High", "Low"))
+```
+
+## Check interaction of GRAMD1B with BRAF
+```{r}
+clinicalData$BRAF<-factor(clinicalData$BRAF)
+#levels(clinicalData$BRAF)<-c("WT", "Mutant")
+my_comparisons <- list( c("WT", "Mutant"))
+ggplot(clinicalData[!is.na(clinicalData$BRAF),], aes(x=BRAF, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
+  xlab("BRAF")+
+  ylab("VST normalized GRAMD1B\nexpression (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")
+ggsave(paste("../results/TCGA_BRAF.pdf", sep=""), device = "pdf", width =8, units = "cm", height=6)
+```
+## Check interaction of GRAMD1B with NRAS
+```{r}
+clinicalData$NRAS<-factor(clinicalData$NRAS)
+#levels(clinicalData$BRAF)<-c("WT", "Mutant")
+my_comparisons <- list( c("WT", "Mutant"))
+ggplot(clinicalData[!is.na(clinicalData$NRAS),], aes(x=NRAS, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
+  xlab("NRAS")+
+  ylab("VST normalized GRAMD1B expression\n(stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")
+ggsave(paste("../results/TCGA_NRAS.pdf", sep=""), device = "pdf", width =8, units = "cm", height=6)
+```
+
+```{r}
+clinicalData$PTENGroupMean<-factor(clinicalData$PTENGroupMean)
+#levels(clinicalData$BRAF)<-c("WT", "Mutant")
+my_comparisons <- list( c("High", "Low"))
+ggplot(clinicalData[!is.na(clinicalData$PTENGroupMean),], aes(x=PTENGroupMean, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
+  xlab("PTEN")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")
+ggsave(paste("../results/TCGA_PTEN.pdf", sep=""), device = "pdf", width =8, units = "cm", height=6)
+```
+## BRAF mutation and PTEN loss
+```{r}
+clinicalData$BRAF_PTEN<-ifelse(
+   (clinicalData$BRAF=="Mutant") & (clinicalData$PTENGroupMean=="Low"),
+   "Yes",
+   "No")
+clinicalData$BRAF_PTEN<-factor(clinicalData$BRAF_PTEN)
+my_comparisons <- list( c("Yes", "No"))
+ggplot(clinicalData[!is.na(clinicalData$BRAF_PTEN),], aes(x=BRAF_PTEN, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
+  xlab("BRAF mutant + PTEN low")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")
+ggsave(paste("../results/TCGA_BRAF_PTEN.pdf", sep=""), device = "pdf", width =8, units = "cm", height=6)
+```
+```{r}
+clinicalData$BRAF_PTEN_NRAS<-ifelse(
+   (clinicalData$BRAF=="Mutant") & (clinicalData$PTENGroupMean=="Low") & (clinicalData$NRAS==""),
+   "Yes",
+   "No")
+clinicalData$BRAF_PTEN_NRAS<-factor(clinicalData$BRAF_PTEN_NRAS)
+my_comparisons <- list( c("Yes", "No"))
+ggplot(clinicalData[!is.na(clinicalData$BRAF_PTEN_NRAS),], aes(x=BRAF_PTEN_NRAS, y=Signature))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, aes())+
+  #scale_fill_brewer(type="qual", palette = "Dark2", name = "GRAMD1B risk group")+
+  xlab("BRAF mutant + PTEN low")+
+  ylab("VST normalized GRAMD1B expression (stand.)")+
+  #geom_hline(yintercept = quantile(clinicalData$Signature, 0.75), color = "grey", linetype = "longdash")+
+  theme(text=element_text(size=7,  family="sans"))+
+  ggpubr::stat_compare_means(comparisons = my_comparisons, method = "t.test", size = 2.5, family="sans")
 ```
 
 ## Perform survival analysis
@@ -184,4 +308,41 @@ g1 <- ggplot(data=tcga_surv,
    theme(text=element_text(size=7,  family="sans"))
    #theme_set(ggpubr::theme_pubr(base_size=10, legend='bottom'))
 ggsave(paste("~/Desktop/Melanoma/Shruthy/GRAMD1B/results/survival/TCGA_all_OS_ForestPlots.pdf", sep=""), device = "pdf", width = 10, units = "cm", height=4.5)
+```
+
+## Divide Signature based on Breslow thickness
+```{r}
+clinicalData$breslow_depth_value_group<-NA
+clinicalData$breslow_depth_value_group[clinicalData$breslow_depth_value<=1]<-"<=1 mm"
+clinicalData$breslow_depth_value_group[(clinicalData$breslow_depth_value>1)&
+                                          (clinicalData$breslow_depth_value<=2)]<-">1-2 mm"
+clinicalData$breslow_depth_value_group[(clinicalData$breslow_depth_value>2)&
+                                          (clinicalData$breslow_depth_value<=3)]<-">2-3 mm"
+clinicalData$breslow_depth_value_group[(clinicalData$breslow_depth_value>3)&
+                                          (clinicalData$breslow_depth_value<=4)]<-">3-4 mm"
+clinicalData$breslow_depth_value_group[(clinicalData$breslow_depth_value>4)]<-">4 mm"
+
+```
+
+```{r}
+clinicalData$SignatureGroupMean_breslow<-NA
+clinicalData$SignatureGroupMean_breslow[(clinicalData$SignatureGroupMean=="High")&                                        (clinicalData$breslow_depth_value_group%in%c(">3-4 mm", ">4 mm"))]<-"High GRAMD1B/Breslow>3mm"
+clinicalData$SignatureGroupMean_breslow[(clinicalData$SignatureGroupMean=="Low")&                                        (clinicalData$breslow_depth_value_group%in%c(">3-4 mm", ">4 mm"))]<-"Low GRAMD1B/Breslow>3mm"
+```
+
+```{r}
+fit <- survfit( survival_d_rc ~ SignatureGroupMean_breslow, 
+      data = clinicalData )
+# KM curve for signature
+pdf(paste("~/Desktop/Melanoma/Shruthy/GRAMD1B/results/survival/TCGA_all_OS_K-M_curve_breslow.pdf", sep=""), width = 3.15, height = 3.15, family="sans", pointsize=7)
+plot(fit, col = c("blue", "red"), xlab = "Time (years)", ylab = "Survival probability", lwd=2)
+pvalStr = survminer::surv_pvalue(fit = fit, data = clinicalData)$pval
+if(pvalStr>=0.0001){
+   pvalStr=round(pvalStr, digits = 4)
+} else{
+  pvalStr=formatC(pvalStr, format = "e", digits = 2) 
+}
+text(x= 5, y=0.1, paste0("p=", pvalStr))
+legend("topright", col = c("blue", "red"), legend = c("High", "Low"), lty = 1, lwd=2)
+dev.off()
 ```
