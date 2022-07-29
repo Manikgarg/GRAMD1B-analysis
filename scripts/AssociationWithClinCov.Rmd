@@ -803,43 +803,8 @@ os<-data.frame()
 pfs<-data.frame()
 temp<-data.frame()
 
-if (tissue=="Skin") {
-  if(!("ClarkScore"%in%colnames(clinicalData))){
-    jt_ns_sm_scores = read.table("~/Desktop/Melanoma/JT_NS_SM_Combined.xls - JT_NS_SM.tsv", sep = "\t", header = TRUE, quote = "")
-  combinedScore <- data.frame("Scanned_file.me"= jt_ns_sm_scores$JT_Scanned_file.me,
-                              "R.Seq_sampleID"= jt_ns_sm_scores$JT_R.Seq_sampleID,
-                              "ClarkScore"=ifelse(jt_ns_sm_scores$JT_Clark_score==jt_ns_sm_scores$NS_Clark_score,
-                                                  jt_ns_sm_scores$JT_Clark_score,
-                                                  jt_ns_sm_scores$SM_Clark_score),
-                           "MIAScore"= ifelse(jt_ns_sm_scores$JT_TIL_grade==jt_ns_sm_scores$NS_TIL.GRADE,
-                                              jt_ns_sm_scores$JT_TIL_grade,
-                                              jt_ns_sm_scores$SM_TIL_grade))
-  #Remove duplicated entries
-  combinedScore<-combinedScore[!duplicated(combinedScore$R.Seq_sampleID), ]
-  rownames(combinedScore)<-combinedScore$R.Seq_sampleID #rename rownames with sample ids
-  combinedScore$ClarkScore <- as.factor(combinedScore$ClarkScore)
-  levels(combinedScore$ClarkScore) <- c("absent", "nonbrisk", "brisk")
-  clinicalData<-merge(clinicalData, combinedScore, by.x="RNA.Seq.Sample", by.y="R.Seq_sampleID")
-  rownames(clinicalData)<-clinicalData$RNA.Seq.Sample}
-  combinations<-c("", 
-                "+Sex",
-                "+Age",
-                "+as.character(Stage_binary)",
-                "+ECOG",
-                "+treatment",
-                "+as.numeric(Nclass)",
-                "+NRAS",
-                "+Sex+Age+as.character(Stage_binary)+ECOG+treatment+as.numeric(Nclass)+NRAS",
-                "+Sex+Age+as.character(Stage_binary)+ECOG+treatment+as.numeric(Nclass)+NRAS+ClarkScore")}else{
-                  combinations<-c("", 
-                "+Sex",
-                "+Age",
-                "+as.character(Stage_binary)",
-                "+ECOG",
-                "+treatment",
-                "+as.numeric(Nclass)",
-                "+NRAS",
-                "+Sex+Age+as.character(Stage_binary)+ECOG+treatment+as.numeric(Nclass)+NRAS")}
+combinations<-c("", 
+                "+as.character(Stage_binary)")
 
 for (combination in combinations) {
   #Add TIL score if tissue = Skin, otherwise, omit
@@ -871,79 +836,12 @@ for (combination in combinations) {
 #Forest plot for OS and PFS
 os$Event<-"OS"
 pfs$Event<-"PFS"
-if (tissue=="Skin") {
-  os$Group<- factor(c("GRAMD1B", 
-             "GRAMD1B+Sex", 
-             "GRAMD1B+Age", 
-             "GRAMD1B+Stage (II vs III)", 
-             "GRAMD1B+ECOG", 
-             "GRAMD1B+Treatment", 
-             "GRAMD1B+Nclass",
-             "GRAMD1B+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS+\nTIL count"), levels=c("GRAMD1B", 
-             "GRAMD1B+Sex", 
-             "GRAMD1B+Age", 
-             "GRAMD1B+Stage (II vs III)", 
-             "GRAMD1B+ECOG", 
-             "GRAMD1B+Treatment", 
-             "GRAMD1B+Nclass",
-             "GRAMD1B+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS+\nTIL count"))
-  pfs$Group<- factor(c("GRAMD1B", 
-             "GRAMD1B+Sex", 
-             "GRAMD1B+Age", 
-             "GRAMD1B+Stage (II vs III)", 
-             "GRAMD1B+ECOG", 
-             "GRAMD1B+Treatment", 
-             "GRAMD1B+Nclass",
-             "GRAMD1B+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS+\nTIL count"), levels=c("GRAMD1B", 
-             "GRAMD1B+Sex", 
-             "GRAMD1B+Age", 
-             "GRAMD1B+Stage (II vs III)", 
-             "GRAMD1B+ECOG", 
-             "GRAMD1B+Treatment", 
-             "GRAMD1B+Nclass",
-             "GRAMD1B+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS+\nTIL count"))}else{
-  os$Group<- factor(c("GRAMD1B", 
-             "GRAMD1B+Sex", 
-             "GRAMD1B+Age", 
-             "GRAMD1B+Stage (II vs III)", 
-             "GRAMD1B+ECOG", 
-             "GRAMD1B+Treatment", 
-             "GRAMD1B+Nclass",
-             "GRAMD1B+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS"), levels=c("GRAMD1B", 
-             "GRAMD1B+Sex", 
-             "GRAMD1B+Age", 
-             "GRAMD1B+Stage (II vs III)", 
-             "GRAMD1B+ECOG", 
-             "GRAMD1B+Treatment", 
-             "GRAMD1B+Nclass",
-             "GRAMD1B+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS"))
-  pfs$Group<- factor(c("GRAMD1B", 
-             "GRAMD1B+Sex", 
-             "GRAMD1B+Age", 
-             "GRAMD1B+Stage (II vs III)", 
-             "GRAMD1B+ECOG", 
-             "GRAMD1B+Treatment", 
-             "GRAMD1B+Nclass",
-             "GRAMD1B+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS"), levels=c("GRAMD1B", 
-             "GRAMD1B+Sex", 
-             "GRAMD1B+Age", 
-             "GRAMD1B+Stage (II vs III)", 
-             "GRAMD1B+ECOG", 
-             "GRAMD1B+Treatment", 
-             "GRAMD1B+Nclass",
-             "GRAMD1B+NRAS",
-             "GRAMD1B+Sex+Age+\nStage (II vs III)+ECOG+\ntreatment+Nclass+NRAS"))}
+os$Group<- factor(c("GRAMD1B", 
+             "GRAMD1B+\nStage (II vs III)"), levels=c("GRAMD1B", 
+             "GRAMD1B+\nStage (II vs III)"))
+pfs$Group<- factor(c("GRAMD1B", 
+             "GRAMD1B+\nStage (II vs III)"), levels=c("GRAMD1B", 
+             "GRAMD1B+\nStage (II vs III)"))
 
 df = rbind(os, pfs)
 df$Group = as.factor(df$Group)
@@ -962,7 +860,7 @@ g3<-ggplot(data=df,
     xlab('')+
     ylab("Hazard Ratio (95% Confidence Interval)")+
     geom_errorbar(aes(ymin=as.numeric(Lower_HazardRatio), ymax=as.numeric(Upper_HazardRatio)),width=0.1,cex=1, position=position_dodge(width=0.5))+ 
-    geom_text(hjust = 0.5, vjust=-2, position=position_dodge(width=0.5), size=2.5,  family="sans")+
+    geom_text(hjust = 0.75, vjust=-0.75, position=position_dodge(width=0.5), size=2.5,  family="sans")+
     #scale_y_continuous()+
     ylim(c(0,2))+
     scale_color_brewer(type = "qual", palette = "Set2")+
@@ -970,7 +868,7 @@ g3<-ggplot(data=df,
     theme(text=element_text(size=7,  family="sans"), legend.position = "top")
    #theme_set(ggpubr::theme_pubr(base_size=10, legend='bottom'))
 
-ggsave(paste("../results/survival/AVAST-M_",tissue,"_OS_PFS_ForestPlots_withNRAS_Stage_binary.pdf", sep=""), device = "pdf", width = 10, units = "cm", height=14)
+ggsave(paste("../results/survival/AVAST-M_",tissue,"_OS_PFS_ForestPlots_Stage_binary.pdf", sep=""), device = "pdf", width = 8, units = "cm", height=6)
 
 
 #Save the values
